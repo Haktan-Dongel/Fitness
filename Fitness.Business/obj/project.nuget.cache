@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "dgSpecHash": "DpFdVgqqctM=",
+  "success": true,
+  "projectFilePath": "C:\\Users\\hakta\\source\\repos\\Fitness\\Fitness.Business\\Fitness.Business.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\hakta\\.nuget\\packages\\microsoft.entityframeworkcore.abstractions\\9.0.0\\microsoft.entityframeworkcore.abstractions.9.0.0.nupkg.sha512"
+  ],
+  "logs": []
+}
