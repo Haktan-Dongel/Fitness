@@ -22,29 +22,33 @@ namespace Fitness.Data.Repositories
             return await _dbSet.ToListAsync();
         }
 
-        public virtual async Task<T?> GetByIdAsync(object id)
+        public virtual async Task<T?> GetByIdAsync(int id)
         {
             return await _dbSet.FindAsync(id);
         }
 
-        public virtual async Task AddAsync(T entity)
+        public virtual async Task<T> AddAsync(T entity)
         {
-            await _dbSet.AddAsync(entity);
+            var entry = await _dbSet.AddAsync(entity);
+            await _context.SaveChangesAsync();
+            return entry.Entity;
         }
 
-        public virtual Task UpdateAsync(T entity)
+        public virtual async Task<T> UpdateAsync(T entity)
         {
-            _dbSet.Update(entity);
-            return Task.CompletedTask;
+            var entry = _context.Entry(entity);
+            entry.State = EntityState.Modified;
+            await _context.SaveChangesAsync();
+            return entry.Entity;
         }
 
-        public virtual Task DeleteAsync(T entity)
+        public virtual async Task DeleteAsync(T entity)
         {
             _dbSet.Remove(entity);
-            return Task.CompletedTask;
+            await Task.CompletedTask;
         }
 
-        public async Task SaveChangesAsync()
+        public virtual async Task SaveChangesAsync()
         {
             await _context.SaveChangesAsync();
         }

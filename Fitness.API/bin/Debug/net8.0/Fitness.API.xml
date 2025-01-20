@@ -1,0 +1,15 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>Fitness.API</name>
+    </assembly>
+    <members>
+        <member name="M:Fitness.API.Controllers.ReservationsController.CreateReservation(Fitness.Business.DTOs.CreateReservationDto)">
+            <summary>
+            Creates one or two consecutive reservations
+            </summary>
+            <param name="dto">Reservation details including consecutive slot option</param>
+            <returns>The created reservations</returns>
+        </member>
+    </members>
+</doc>

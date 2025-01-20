@@ -38,9 +38,11 @@ namespace Fitness.API
             builder.Services.AddScoped<ITimeSlotRepository, TimeSlotRepository>();
             builder.Services.AddScoped<IRunningSessionRepository, RunningSessionRepository>();
             builder.Services.AddScoped<ICyclingSessionRepository, CyclingSessionRepository>();
+            builder.Services.AddScoped<ITimeSlotRepository, TimeSlotRepository>();
 
             // Registratie van services
             builder.Services.AddScoped<IMemberService, MemberService>();
+            builder.Services.AddScoped<IReservationService, ReservationService>();
 
             builder.Services.AddControllers()
                 .AddJsonOptions(options =>
@@ -49,7 +51,20 @@ namespace Fitness.API
                 });
 
             builder.Services.AddEndpointsApiExplorer();
-            builder.Services.AddSwaggerGen();
+            builder.Services.AddSwaggerGen(c =>
+            {
+                c.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo 
+                { 
+                    Title = "Fitness API", 
+                    Version = "v1",
+                    Description = "API for fitness equipment reservations"
+                });
+                
+                // Enable XML comments
+                var xmlFile = $"{System.Reflection.Assembly.GetExecutingAssembly().GetName().Name}.xml";
+                var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+                c.IncludeXmlComments(xmlPath);
+            });
 
             // CORS
             builder.Services.AddCors(options =>

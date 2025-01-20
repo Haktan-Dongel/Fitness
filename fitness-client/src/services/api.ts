@@ -174,7 +174,8 @@ export interface CreateReservationDto {
   memberId: number;
   equipmentId: number;
   timeSlotId: number;
-  date: string;  // YYYY-MM-DD format
+  date: string;
+  includeNextSlot: boolean;  // Changed from IncludeNextSlot to match C# property
 }
 
 export interface DashboardStats {
@@ -256,37 +257,11 @@ export const reservationAPI = {
   getAll: () => api.get<Reservation[]>('/reservations'),
   getById: (id: number) => api.get<Reservation>(`/reservations/${id}`),
   create: (data: CreateReservationDto) => {
-    // Ensure all fields are present and correctly typed
-    const payload = {
-      memberId: Number(data.memberId),
-      equipmentId: Number(data.equipmentId),
-      timeSlotId: Number(data.timeSlotId),
-      date: data.date // Keep as YYYY-MM-DD
-    };
-
-    console.log('Creating reservation with payload:', payload);
-
-    return api.post<Reservation>('/reservations', payload)
+    console.log('Creating reservation with payload:', data);
+    return api.post<ReservationDto[]>('/reservations', data)  // Changed return type to array
       .catch(error => {
-        console.error('API Error:', {
-          status: error.response?.status,
-          data: error.response?.data,
-          originalPayload: payload
-        });
-
-        // Extract error message
-        let errorMessage = 'Failed to create reservation';
-        if (error.response?.data) {
-          if (typeof error.response.data === 'string') {
-            errorMessage = error.response.data;
-          } else if (error.response.data.errors) {
-            errorMessage = Object.values(error.response.data.errors).flat().join(', ');
-          } else if (error.response.data.title) {
-            errorMessage = error.response.data.title;
-          }
-        }
-
-        throw new Error(errorMessage);
+        console.error('Reservation creation failed:', error.response?.data);
+        throw error;
       });
   },
   delete: (id: number) => api.delete(`/reservations/${id}`),

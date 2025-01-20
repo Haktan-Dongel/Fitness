@@ -34,8 +34,8 @@ namespace Fitness.Data.Repositories
         public async Task<IEnumerable<RunningSessionMain>> GetByMemberAsync(int memberId)
         {
             return await _dbSet
-                .Where(rs => rs.MemberId == memberId)
                 .Include(rs => rs.Details)
+                .Where(rs => rs.MemberId == memberId)
                 .OrderByDescending(rs => rs.Date)
                 .ToListAsync();
         }
@@ -63,10 +63,10 @@ namespace Fitness.Data.Repositories
         public async Task<IEnumerable<RunningSessionMain>> GetByDateRangeAsync(int memberId, DateTime startDate, DateTime endDate)
         {
             return await _dbSet
-                .Where(rs => rs.MemberId == memberId && 
-                            rs.Date >= startDate && 
-                            rs.Date <= endDate)
                 .Include(rs => rs.Details)
+                .Where(rs => rs.MemberId == memberId 
+                         && rs.Date >= startDate 
+                         && rs.Date <= endDate)
                 .OrderByDescending(rs => rs.Date)
                 .ToListAsync();
         }

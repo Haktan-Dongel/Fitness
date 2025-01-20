@@ -11,5 +11,6 @@ namespace Fitness.Business.Interfaces
         Task<TimeSlot?> GetByStartAndEndTimeAsync(int startTime, int endTime);
         Task<IEnumerable<TimeSlot>> GetAvailableForDateAsync(DateTime date);
         Task<bool> IsTimeSlotAvailableAsync(int timeSlotId, DateTime date);
+        Task<TimeSlot?> GetNextConsecutiveSlotAsync(TimeSlot currentSlot);
     }
 }

@@ -41,5 +41,11 @@ namespace Fitness.Data.Repositories
             return !await _context.Reservations
                 .AnyAsync(r => r.TimeSlotId == timeSlotId && r.Date.Date == date.Date);
         }
+
+        public async Task<TimeSlot?> GetNextConsecutiveSlotAsync(TimeSlot currentSlot)
+        {
+            return await _dbSet
+                .FirstOrDefaultAsync(ts => ts.StartTime == currentSlot.EndTime);
+        }
     }
 }

@@ -9,9 +9,7 @@ namespace Fitness.Business.Interfaces
     {
         Task<IEnumerable<Reservation>> GetByMemberAsync(int memberId);
         Task<IEnumerable<Reservation>> GetByDateAsync(DateTime date);
-        Task<bool> HasConflictingReservationAsync(int memberId, DateTime date, int timeSlotId);
+        Task<bool> HasConflictingReservationAsync(DateTime date, int timeSlotId, int equipmentId);
         Task<int> GetDailyReservationCountAsync(int memberId, DateTime date);
-        Task<bool> ValidateReservationAsync(int memberId, DateTime date, int timeSlotId, int equipmentId);
-        Task<IEnumerable<Reservation>> GetFutureReservationsAsync(int equipmentId);
     }
 }

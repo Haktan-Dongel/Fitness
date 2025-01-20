@@ -4,11 +4,10 @@ import {
   Button, TextField, MenuItem, Alert,
   CircularProgress, FormControl, InputLabel, Select, Grid
 } from '@mui/material';
-import { CreateReservationDto, equipmentAPI, timeSlotAPI, Equipment as ApiEquipment } from '../services/api';
+import { equipmentAPI, timeSlotAPI, Equipment as ApiEquipment } from '../services/api';
 
 interface Equipment extends ApiEquipment {
   name: string;
-  description: string;
 }
 
 interface TimeSlot {
@@ -17,19 +16,27 @@ interface TimeSlot {
   endTime: string | Date;
 }
 
+interface FormData {
+  date: string;
+  equipmentId: number;
+  timeSlotId: number;
+  includeNextSlot: boolean;
+}
+
 interface CreateReservationDialogProps {
   open: boolean;
   onClose: () => void;
-  onSave: (data: CreateReservationDto) => Promise<void>;
+  onSave: (data: FormData) => Promise<void>;
 }
 
 export default function CreateReservationDialog({ open, onClose, onSave }: CreateReservationDialogProps) {
-  const [formData, setFormData] = useState<CreateReservationDto>({
+  const [formData, setFormData] = useState<FormData>({
     date: new Date().toISOString().split('T')[0],
-    timeSlotId: 0,
     equipmentId: 0,
-    memberId: 1
+    timeSlotId: 0,
+    includeNextSlot: false
   });
+
   const [availableEquipment, setAvailableEquipment] = useState<Equipment[]>([]);
   const [availableTimeSlots, setAvailableTimeSlots] = useState<TimeSlot[]>([]);
   const [loading, setLoading] = useState(false);
@@ -47,15 +54,13 @@ export default function CreateReservationDialog({ open, onClose, onSave }: Creat
             const availableEquipment = await equipmentAPI.getAvailable(formData.date, formData.timeSlotId);
             equipment = availableEquipment.data.map(e => ({
               ...e,
-              name: e.deviceType,
-              description: `Equipment #${e.equipmentId}`
+              name: e.deviceType
             }));
           } else {
             const allEquipment = await equipmentAPI.getAll();
             equipment = allEquipment.data.map(e => ({
               ...e,
-              name: e.deviceType,
-              description: `Equipment #${e.equipmentId}`
+              name: e.deviceType
             }));
           }
 
@@ -85,6 +90,23 @@ export default function CreateReservationDialog({ open, onClose, onSave }: Creat
     return `${start} - ${end}`;
   };
 
+  const handleTimeSlotChange = (event: { target: { value: unknown } }) => {
+    const timeSlotId = event.target.value as number;
+    setFormData(prev => ({ 
+      ...prev, 
+      timeSlotId,
+      // Reset includeNextSlot when changing time slot
+      includeNextSlot: false
+    }));
+  };
+
+  const isValidSelection = () => {
+    return formData.date && 
+           formData.equipmentId && 
+           formData.timeSlotId > 0 &&
+           !error;
+  };
+
   return (
     <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
       <DialogTitle>Create New Reservation</DialogTitle>
@@ -111,7 +133,7 @@ export default function CreateReservationDialog({ open, onClose, onSave }: Creat
               >
                 {availableEquipment.map((item) => (
                   <MenuItem key={item.equipmentId} value={item.equipmentId}>
-                    {`#${item.equipmentId} - ${item.deviceType}`}
+                    {item.name}
                   </MenuItem>
                 ))}
               </Select>
@@ -122,7 +144,7 @@ export default function CreateReservationDialog({ open, onClose, onSave }: Creat
               <InputLabel>Time Slot</InputLabel>
               <Select
                 value={formData.timeSlotId || ''}
-                onChange={(e) => setFormData({ ...formData, timeSlotId: Number(e.target.value) })}
+                onChange={handleTimeSlotChange}
                 disabled={loading}
               >
                 {availableTimeSlots.map((slot) => (
@@ -133,13 +155,25 @@ export default function CreateReservationDialog({ open, onClose, onSave }: Creat
               </Select>
             </FormControl>
           </Grid>
+          <Grid item xs={12}>
+            <FormControl fullWidth>
+              <Button
+                onClick={() => setFormData(prev => ({ ...prev, includeNextSlot: !prev.includeNextSlot }))}
+                disabled={!formData.timeSlotId}
+                color={formData.includeNextSlot ? "primary" : "inherit"}
+                variant={formData.includeNextSlot ? "contained" : "outlined"}
+              >
+                {formData.includeNextSlot ? "Include Next Slot ✓" : "Include Next Slot"}
+              </Button>
+            </FormControl>
+          </Grid>
         </Grid>
       </DialogContent>
       <DialogActions>
         <Button onClick={onClose}>Cancel</Button>
         <Button 
           onClick={() => onSave(formData)}
-          disabled={loading || !formData.date || !formData.equipmentId || !formData.timeSlotId}
+          disabled={loading || !isValidSelection()}
         >
           {loading ? <CircularProgress size={24} /> : 'Create'}
         </Button>

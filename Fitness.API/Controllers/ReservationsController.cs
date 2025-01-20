@@ -1,34 +1,33 @@
 using Microsoft.AspNetCore.Mvc;
+using Swashbuckle.AspNetCore.Annotations;
 using Fitness.Business.Interfaces;
-using Fitness.Business.Models;
 using Fitness.Business.DTOs;
+using Fitness.Business.Exceptions;
 
 namespace Fitness.API.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [Produces("application/json")]
     public class ReservationsController : ControllerBase
     {
-        private readonly IReservationRepository _reservationRepository;
-        private readonly IEquipmentRepository _equipmentRepository;
+        private readonly IReservationService _reservationService;
         private readonly ILogger<ReservationsController> _logger;
 
         public ReservationsController(
-            IReservationRepository reservationRepository,
-            IEquipmentRepository equipmentRepository,
+            IReservationService reservationService,
             ILogger<ReservationsController> logger)
         {
-            _reservationRepository = reservationRepository;
-            _equipmentRepository = equipmentRepository;
+            _reservationService = reservationService;
             _logger = logger;
         }
 
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Reservation>>> GetAllReservations()
+        public async Task<ActionResult<IEnumerable<ReservationDto>>> GetAllReservations()
         {
             try
             {
-                var reservations = await _reservationRepository.GetAllAsync();
+                var reservations = await _reservationService.GetAllReservationsAsync();
                 return Ok(reservations);
             }
             catch (Exception ex)
@@ -39,15 +38,16 @@ namespace Fitness.API.Controllers
         }
 
         [HttpGet("{id}")]
-        public async Task<ActionResult<Reservation>> GetReservation(int id)
+        public async Task<ActionResult<ReservationDto>> GetReservation(int id)
         {
             try
             {
-                var reservation = await _reservationRepository.GetByIdAsync(id);
-                if (reservation == null)
-                    return NotFound();
-
+                var reservation = await _reservationService.GetReservationAsync(id);
                 return Ok(reservation);
+            }
+            catch (NotFoundException ex)
+            {
+                return NotFound(ex.Message);
             }
             catch (Exception ex)
             {
@@ -57,99 +57,53 @@ namespace Fitness.API.Controllers
         }
 
         [HttpPost]
-        public async Task<ActionResult<Reservation>> CreateReservation([FromBody] CreateReservationDto dto)
+        [SwaggerOperation(
+            Summary = "Create new reservations",
+            Description = "Creates one or two consecutive reservations based on IncludeNextSlot flag"
+        )]
+        [ProducesResponseType(typeof(IEnumerable<ReservationDto>), StatusCodes.Status201Created)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<ActionResult<IEnumerable<ReservationDto>>> CreateReservation([FromBody] CreateReservationDto dto)
         {
             try
             {
-                _logger.LogInformation("Received reservation request: {@RequestDto}", dto);
+                _logger.LogInformation("Starting reservation creation with data: {@Dto}", dto);
 
-                var reservation = new Reservation
+                if (dto == null)
                 {
-                    MemberId = dto.MemberId,
-                    EquipmentId = dto.EquipmentId,
-                    TimeSlotId = dto.TimeSlotId,
-                    Date = dto.Date.Date 
-                };
-
-                // Basis validatie
-                if (dto.EquipmentId <= 0 || dto.TimeSlotId <= 0 || dto.MemberId <= 0)
-                {
-                    return BadRequest("Invalid Equipment, TimeSlot, or Member ID");
+                    _logger.LogWarning("Received null reservation DTO");
+                    return BadRequest("Reservation data is required");
                 }
 
-                // Valideer datum niet in het verleden
-                var today = DateTime.Today;
-                var requestDate = dto.Date.Date;
+                _logger.LogInformation("Validating reservation data: MemberId={MemberId}, EquipmentId={EquipmentId}, TimeSlotId={TimeSlotId}, Date={Date}, IncludeNextSlot={IncludeNextSlot}",
+                    dto.MemberId, dto.EquipmentId, dto.TimeSlotId, dto.Date, dto.IncludeNextSlot);
+
+                if (dto.MemberId == 0 || dto.EquipmentId == 0 || dto.TimeSlotId == 0)
+                {
+                    _logger.LogWarning("Invalid reservation data received: {@RequestDto}", dto);
+                    return BadRequest("Invalid reservation data");
+                }
+
+                var reservations = await _reservationService.CreateReservationsAsync(dto);
                 
-                if (requestDate < today)
-                {
-                    return BadRequest("Cannot create reservations for past dates");
-                }
-
-                // Valideer datum niet meer dan een week in de toekomst
-                var maxDate = today.AddDays(7);
-                if (requestDate > maxDate)
-                {
-                    return BadRequest("Cannot create reservations more than one week in advance");
-                }
-
-                // Valideer dagelijkse limiet (max 4)
-                var dailyCount = await _reservationRepository.GetDailyReservationCountAsync(dto.MemberId, requestDate);
-                if (dailyCount >= 4)
-                {
-                    return BadRequest("Maximum daily reservations (4) reached");
-                }
-
-                // valideer max 2 aaneengesloten tijdsloten
-                var memberReservations = await _reservationRepository.GetByMemberAsync(dto.MemberId);
-                var sameDayReservations = memberReservations
-                    .Where(r => r.Date.Date == requestDate)
-                    .OrderBy(r => r.TimeSlotId)
-                    .ToList();
-
-                if (sameDayReservations.Any())
-                {
-                    var consecutiveCount = 1;
-                    var lastSlotId = sameDayReservations.First().TimeSlotId;
-
-                    foreach (var res in sameDayReservations.Skip(1))
-                    {
-                        if (res.TimeSlotId == lastSlotId + 1)
-                        {
-                            consecutiveCount++;
-                            if (consecutiveCount >= 2 && dto.TimeSlotId == lastSlotId + 1)
-                            {
-                                return BadRequest("Cannot reserve more than 2 consecutive time slots");
-                            }
-                        }
-                        else
-                        {
-                            consecutiveCount = 1;
-                        }
-                        lastSlotId = res.TimeSlotId;
-                    }
-                }
-
-                // valideer beschikbaarheid van apparatuur
-                var isAvailable = await _equipmentRepository.IsAvailableForTimeSlotAsync(
-                    dto.EquipmentId, dto.TimeSlotId, requestDate);
-
-                if (!isAvailable)
-                {
-                    return BadRequest("Equipment is not available for the selected time slot");
-                }
-
-                // Maak de reservering
-                await _reservationRepository.AddAsync(reservation);
-                await _reservationRepository.SaveChangesAsync();
-
-                return CreatedAtAction(nameof(GetReservation), 
-                    new { id = reservation.ReservationId }, reservation);
+                _logger.LogInformation("Successfully created {Count} reservations", reservations.Count());
+                
+                var firstReservation = reservations.First();
+                return CreatedAtAction(
+                    nameof(GetReservation), 
+                    new { id = firstReservation.ReservationId }, 
+                    reservations);
+            }
+            catch (ValidationException ex)
+            {
+                _logger.LogWarning(ex, "Validation failed for reservation request: {@RequestDto}", dto);
+                return BadRequest(ex.Message);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error creating reservation");
-                return StatusCode(500, "Error creating reservation");
+                _logger.LogError(ex, "Error creating reservations for request: {@RequestDto}", dto);
+                return StatusCode(500, "Error creating reservations");
             }
         }
 
@@ -158,14 +112,12 @@ namespace Fitness.API.Controllers
         {
             try
             {
-                var reservation = await _reservationRepository.GetByIdAsync(id);
-                if (reservation == null)
-                    return NotFound();
-
-                await _reservationRepository.DeleteAsync(reservation);
-                await _reservationRepository.SaveChangesAsync();
-
+                await _reservationService.DeleteReservationAsync(id);
                 return NoContent();
+            }
+            catch (NotFoundException ex)
+            {
+                return NotFound(ex.Message);
             }
             catch (Exception ex)
             {

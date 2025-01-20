@@ -36,46 +36,5 @@ namespace Fitness.Data.Repositories
                 .OrderByDescending(cs => cs.Date)
                 .ToListAsync();
         }
-
-        public async Task<IEnumerable<CyclingSession>> GetByMonthAsync(int memberId, int year, int month)
-        {
-            var startDate = new DateTime(year, month, 1);
-            var endDate = startDate.AddMonths(1).AddDays(-1);
-
-            _logger.LogDebug("Fetching cycling sessions for member {MemberId} between {StartDate} and {EndDate}",
-                memberId, startDate, endDate);
-
-            var sessions = await _dbSet
-                .Where(cs => cs.MemberId == memberId && 
-                            cs.Date >= startDate && 
-                            cs.Date <= endDate)
-                .OrderByDescending(cs => cs.Date)
-                .ToListAsync();
-
-            _logger.LogDebug("Found {Count} cycling sessions", sessions.Count);
-            return sessions;
-        }
-
-        public async Task<(double TotalWatt, double MaxWatt)> GetPerformanceStatsAsync(int memberId, DateTime startDate, DateTime endDate)
-        {
-            var sessions = await _dbSet
-                .Where(cs => cs.MemberId == memberId 
-                         && cs.Date >= startDate 
-                         && cs.Date <= endDate)
-                .ToListAsync();
-
-            if (!sessions.Any())
-                return (0, 0);
-
-            return (
-                TotalWatt: sessions.Average(cs => (double)cs.AvgWatt),
-                MaxWatt: sessions.Max(cs => (double)cs.MaxWatt)
-            );
-        }
-
-        public async Task<IEnumerable<CyclingSession>> GetAllForMemberAsync(int memberId)
-        {
-            return await GetByMemberAsync(memberId);
-        }
     }
 }

@@ -1,11 +1,10 @@
 import { useState, useEffect } from 'react';
 import { 
-  Box, Typography, Paper, CircularProgress, Alert, TextField,
-  Button
+  Box, Typography, Paper, CircularProgress, Alert, Button
 } from '@mui/material';
 import { DataGrid, GridColDef } from '@mui/x-data-grid';
 import DeleteIcon from '@mui/icons-material/Delete';
-import { reservationAPI, timeSlotAPI, equipmentAPI, memberAPI, CreateReservationDto } from '../services/api';
+import { reservationAPI, memberAPI, CreateReservationDto } from '../services/api';
 import CreateReservationDialog from '../components/CreateReservationDialog';
 import AddIcon from '@mui/icons-material/Add';
 import { useAuth } from '../contexts/AuthContext';
@@ -19,76 +18,13 @@ interface EnhancedReservation {
   isPast: boolean;
 }
 
-interface Reservation {
-  reservationId: number;
-  memberId: number;
-  equipmentId: number;
-  timeSlotId: number;
-  date: string;
-}
-
-interface Member {
-  memberId: number;
-  firstName: string;
-  lastName: string;
-}
-
-interface Equipment {
-  equipmentId: number;
-  deviceType: string;
-}
-
-interface TimeSlot {
-  timeSlotId: number;
-  startTime: string | Date;
-  endTime: string | Date;
-  partOfDay: string;
-}
-
 export default function Reservations() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
+  const [selectedDate] = useState(new Date().toISOString().split('T')[0]);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const { user } = useAuth();
   const [enhancedReservations, setEnhancedReservations] = useState<EnhancedReservation[]>([]);
-
-  const formatTime = (time: string | number | Date | null | undefined): string => {
-    if (time === null || time === undefined) return 'N/A';
-    
-    if (typeof time === 'number') {
-      return `${time.toString().padStart(2, '0')}:00`;
-    }
-    
-    try {
-      if (typeof time === 'string') {
-        const match = time.match(/(\d{2}):(\d{2})/);
-        if (match) {
-          return `${match[1]}:${match[2]}`;
-        }
-        const date = new Date(time);
-        if (!isNaN(date.getTime())) {
-          return date.toLocaleTimeString('en-US', {
-            hour: '2-digit',
-            minute: '2-digit',
-            hour12: false
-          });
-        }
-      }
-      if (time instanceof Date) {
-        return time.toLocaleTimeString('en-US', {
-          hour: '2-digit',
-          minute: '2-digit',
-          hour12: false
-        });
-      }
-      console.warn('Unhandled time format:', time);
-      return 'Invalid Time';
-    } catch (error) {
-      console.error('Error formatting time:', error, time);
-      return 'Invalid Time';
-    }
-  };
 
   const columns: GridColDef[] = [
     { field: 'reservationId', headerName: 'ID', width: 90 },
@@ -120,83 +56,30 @@ export default function Reservations() {
     }
   ];
 
-  const processReservation = (reservation: Reservation, members: Member[], equipment: Equipment[], timeSlots: TimeSlot[]) => {
-    try {
-      const member = members.find(m => m.memberId === reservation.memberId);
-      const equipmentItem = equipment.find(e => e.equipmentId === reservation.equipmentId);
-      const timeSlot = timeSlots.find(t => t.timeSlotId === reservation.timeSlotId);
-      
-      const reservationDate = new Date(reservation.date);
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-
-      const enhancedReservation = {
-        reservationId: reservation.reservationId,
-        memberName: member 
-          ? `${member.firstName} ${member.lastName}` 
-          : `Unknown (ID: ${reservation.memberId})`,
-        equipmentName: equipmentItem?.deviceType || `Unknown Equipment (ID: ${reservation.equipmentId})`,
-        timeSlotName: timeSlot 
-          ? `${timeSlot.partOfDay} (${formatTime(timeSlot.startTime)} - ${formatTime(timeSlot.endTime)})` 
-          : `Unknown Time Slot (ID: ${reservation.timeSlotId})`,
-        date: reservation.date,
-        isPast: reservationDate < today
-      };
-
-      console.log('Enhanced reservation:', enhancedReservation);
-      return enhancedReservation;
-    } catch (error) {
-      console.error('Error processing reservation:', error, reservation);
-      return {
-        reservationId: reservation.reservationId,
-        memberName: `Unknown (ID: ${reservation.memberId})`,
-        equipmentName: `Unknown Equipment (ID: ${reservation.equipmentId})`,
-        timeSlotName: `Unknown Time Slot (ID: ${reservation.timeSlotId})`,
-        date: reservation.date,
-        isPast: false
-      };
-    }
-  };
-
   const fetchReservations = async () => {
     try {
       setLoading(true);
-      const [reservationsResponse, timeSlotsResponse, equipmentResponse, membersResponse] = await Promise.all([
-        reservationAPI.getAll(),
-        timeSlotAPI.getAll(),
-        equipmentAPI.getAll(),
-        memberAPI.getAll()
-      ]);
-
-      if (reservationsResponse.data.length > 0) {
-        console.log('Example reservation date:', {
-          rawDate: reservationsResponse.data[0].date,
-          parsed: new Date(reservationsResponse.data[0].date),
-          formatted: reservationsResponse.data[0].date?.split('T')[0] || 'Invalid Date'
-        });
+      
+      if (!user) {
+        setError('Must be logged in to view reservations');
+        return;
       }
 
-      console.log('Raw data:', {
-        timeSlots: timeSlotsResponse.data,
-        equipment: equipmentResponse.data,
-        reservations: reservationsResponse.data,
-        dateExample: reservationsResponse.data[0]?.date
-      });
+      const reservationsResponse = await memberAPI.getReservations(user.memberId);
+      console.log('Reservations response:', reservationsResponse.data);
 
-      const enhanced = reservationsResponse.data.map(reservation => 
-        processReservation(
-          reservation, 
-          membersResponse.data, 
-          equipmentResponse.data, 
-          timeSlotsResponse.data
-        )
-      );
+      // Convert MemberReservationView to EnhancedReservation
+      const enhanced = reservationsResponse.data.map(reservation => ({
+        reservationId: reservation.reservationId,
+        memberName: user ? `${user.firstName} ${user.lastName}` : 'Unknown',
+        equipmentName: reservation.equipment,
+        timeSlotName: reservation.timeSlot,
+        date: reservation.date,
+        isPast: new Date(reservation.date) < new Date()
+      }));
 
-      const filteredReservations = user 
-        ? enhanced.filter(r => r.memberName.includes(`${user.firstName} ${user.lastName}`))
-        : enhanced;
-
-      setEnhancedReservations(filteredReservations);
+      console.log('Enhanced reservations:', enhanced);
+      setEnhancedReservations(enhanced);
       setError(null);
     } catch (error) {
       console.error('Error fetching reservations:', error);
@@ -229,13 +112,6 @@ export default function Reservations() {
       <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3 }}>
         <Typography variant="h5">Reservations</Typography>
         <Box sx={{ display: 'flex', gap: 2 }}>
-          <TextField
-            type="date"
-            value={selectedDate}
-            onChange={(e) => setSelectedDate(e.target.value)}
-            InputLabelProps={{ shrink: true }}
-            sx={{ width: 200 }}
-          />
           <Button
             variant="contained"
             startIcon={<AddIcon />}
@@ -292,22 +168,25 @@ export default function Reservations() {
           setCreateDialogOpen(false);
           setError(null);
         }}
-        onSave={async (data: CreateReservationDto) => {
+        onSave={async (formData) => {
           try {
             if (!user) {
               throw new Error('Must be logged in to create reservations');
             }
 
-            const formattedData = {
+            const reservationData: CreateReservationDto = {
               memberId: user.memberId,
-              equipmentId: Number(data.equipmentId),
-              timeSlotId: Number(data.timeSlotId),
-              date: data.date
+              equipmentId: Number(formData.equipmentId),
+              timeSlotId: Number(formData.timeSlotId),
+              date: formData.date,
+              includeNextSlot: formData.includeNextSlot  // Fixed case to match backend
             };
 
-            console.log('Creating reservation:', formattedData);
+            console.log('Creating reservation:', reservationData);
             
-            await reservationAPI.create(formattedData);
+            const response = await reservationAPI.create(reservationData);
+            console.log('Reservation created:', response.data);
+            
             await fetchReservations();
             setCreateDialogOpen(false);
             setError(null);
@@ -317,4 +196,16 @@ export default function Reservations() {
             console.error('Creation failed:', errorMessage);
           }
         }}
-      />     {error && (        <Alert           severity="error"           sx={{ mt: 2 }}          onClose={() => setError(null)}        >          {error}        </Alert>      )}    </Box>  );}
+      />
+      {error && (
+        <Alert
+          severity="error"
+          sx={{ mt: 2 }}
+          onClose={() => setError(null)}
+        >
+          {error}
+        </Alert>
+      )}
+    </Box>
+  );
+}

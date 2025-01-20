@@ -8,17 +8,17 @@ namespace Fitness.API.Controllers
     [Route("api/[controller]")]
     public class StatisticsController : ControllerBase
     {
-        private readonly ICyclingSessionRepository _cyclingRepo;
-        private readonly IRunningSessionRepository _runningRepo;
+        private readonly ICyclingSessionService _cyclingService;
+        private readonly IRunningSessionService _runningService;
         private readonly ILogger<StatisticsController> _logger;
 
         public StatisticsController(
-            ICyclingSessionRepository cyclingRepo,
-            IRunningSessionRepository runningRepo,
+            ICyclingSessionService cyclingService,
+            IRunningSessionService runningService,
             ILogger<StatisticsController> logger)
         {
-            _cyclingRepo = cyclingRepo;
-            _runningRepo = runningRepo;
+            _cyclingService = cyclingService;
+            _runningService = runningService;
             _logger = logger;
         }
 
@@ -39,15 +39,12 @@ namespace Fitness.API.Controllers
                     return BadRequest("Invalid year or month parameters");
                 }
 
-                var startDate = new DateTime(year.Value, month.Value, 1);
-                var endDate = startDate.AddMonths(1).AddDays(-1);
-
                 _logger.LogInformation(
-                    "Retrieving monthly stats for Member {MemberId} from {StartDate:yyyy-MM-dd} to {EndDate:yyyy-MM-dd}",
-                    memberId, startDate, endDate);
+                    "Retrieving monthly stats for Member {MemberId} for {Year}-{Month}",
+                    memberId, year, month);
 
-                var cyclingSessions = await _cyclingRepo.GetByMonthAsync(memberId, year.Value, month.Value);
-                var runningSessions = await _runningRepo.GetByMonthAsync(memberId, year.Value, month.Value);
+                var cyclingSessions = await _cyclingService.GetByMonthAsync(memberId, year.Value, month.Value);
+                var runningSessions = await _runningService.GetByMonthAsync(memberId, year.Value, month.Value);
 
                 _logger.LogInformation("Found {CyclingCount} cycling sessions and {RunningCount} running sessions",
                     cyclingSessions.Count(), runningSessions.Count());
@@ -118,8 +115,8 @@ namespace Fitness.API.Controllers
         {
             try
             {
-                var cyclingSessions = await _cyclingRepo.GetByDateRangeAsync(memberId, startDate, endDate);
-                var runningSessions = await _runningRepo.GetByDateRangeAsync(memberId, startDate, endDate);
+                var cyclingSessions = await _cyclingService.GetByDateRangeAsync(memberId, startDate, endDate);
+                var runningSessions = await _runningService.GetByDateRangeAsync(memberId, startDate, endDate);
 
                 var allDurations = new List<int>();
                 allDurations.AddRange(cyclingSessions.Select(cs => cs.Duration));
@@ -157,8 +154,8 @@ namespace Fitness.API.Controllers
             {
                 _logger.LogInformation("Fetching yearly summary for member {MemberId}", memberId);
                 
-                var cyclingSessions = await _cyclingRepo.GetAllForMemberAsync(memberId);
-                var runningSessions = await _runningRepo.GetAllForMemberAsync(memberId);
+                var cyclingSessions = await _cyclingService.GetAllForMemberAsync(memberId);
+                var runningSessions = await _runningService.GetAllForMemberAsync(memberId);
 
                 _logger.LogDebug("Found {CyclingCount} cycling sessions and {RunningCount} running sessions",
                     cyclingSessions.Count(), runningSessions.Count());
