@@ -14,7 +14,7 @@ namespace Fitness.Business.DTOs
         public int EquipmentId { get; set; }
 
         [Required]
-        public int TimeSlotId { get; set; }
+        public List<int> TimeSlotIds { get; set; } = new List<int>();
 
         [Required]
         public DateTime Date { get; set; }

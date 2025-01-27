@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using Fitness.Business.Models;
@@ -14,9 +15,6 @@ namespace Fitness.Business.Models
         [Column("equipment_id")]
         public int EquipmentId { get; set; }
 
-        [Column("time_slot_id")]
-        public int TimeSlotId { get; set; }
-
         [Column("date")]
         public DateTime Date { get; set; }
 
@@ -25,6 +23,6 @@ namespace Fitness.Business.Models
 
         public virtual Member Member { get; set; } = null!;
         public virtual Equipment Equipment { get; set; } = null!;
-        public virtual TimeSlot TimeSlot { get; set; } = null!;
+        public virtual ICollection<TimeSlot> TimeSlots { get; set; } = new List<TimeSlot>();
     }
 }

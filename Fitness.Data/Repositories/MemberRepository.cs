@@ -18,7 +18,7 @@ namespace Fitness.Data.Repositories
         {
             return await _context.Reservations
                 .Include(r => r.Equipment)
-                .Include(r => r.TimeSlot)
+                .Include(r => r.TimeSlots) // Updated to include TimeSlots collection
                 .Where(r => r.MemberId == memberId)
                 .ToListAsync();
         }

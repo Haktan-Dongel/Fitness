@@ -21,14 +21,14 @@ namespace Fitness.Data.Repositories
 
             return !await _context.Reservations
                 .AnyAsync(r => r.EquipmentId == equipmentId 
-                           && r.TimeSlotId == timeSlotId 
+                           && r.TimeSlots.Any(ts => ts.TimeSlotId == timeSlotId) 
                            && r.Date.Date == date.Date);
         }
 
         public async Task<IEnumerable<Equipment>> GetAvailableEquipmentForTimeSlotAsync(int timeSlotId, DateTime date)
         {
             var reservedEquipmentIds = await _context.Reservations
-                .Where(r => r.TimeSlotId == timeSlotId && r.Date.Date == date.Date)
+                .Where(r => r.TimeSlots.Any(ts => ts.TimeSlotId == timeSlotId) && r.Date.Date == date.Date)
                 .Select(r => r.EquipmentId)
                 .ToListAsync();
 
@@ -48,6 +48,7 @@ namespace Fitness.Data.Repositories
         {
             return await _dbSet
                 .Include(e => e.Reservations)
+                .ThenInclude(r => r.TimeSlots)
                 .ToListAsync();
         }
     }

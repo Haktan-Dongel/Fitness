@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
-using System.Threading.Tasks;
 using System.Linq;
+using System.Threading.Tasks;
 using Fitness.Business.Interfaces;
 using Fitness.Business.Models;
 using Fitness.Business.DTOs;
@@ -46,56 +46,78 @@ namespace Fitness.Business.Services
 
         public async Task<IEnumerable<ReservationDto>> CreateReservationsAsync(CreateReservationDto dto)
         {
-            _logger.LogInformation("Creating reservation(s) for {@Dto}", dto);
+            _logger.LogInformation("Starting reservation creation with data: {@Dto}", dto);
+            
             var result = new List<ReservationDto>();
 
-            // valideer en creëer eerste reservering
-            if (!await ValidateReservationAsync(dto.MemberId, dto.Date, dto.TimeSlotId, dto.EquipmentId))
+            try
             {
-                throw new ValidationException("Invalid reservation request");
-            }
-
-            var firstReservation = await CreateSingleReservationAsync(dto);
-            result.Add(firstReservation);
-
-            // creëer tweede reservering indien gewenst
-            if (dto.IncludeNextSlot)
-            {
-                var nextSlot = await GetNextConsecutiveSlotAsync(dto.TimeSlotId);
-                if (nextSlot != null && await ValidateReservationAsync(dto.MemberId, dto.Date, nextSlot.TimeSlotId, dto.EquipmentId))
+                // Validate each time slot
+                foreach (var timeSlotId in dto.TimeSlotIds)
                 {
-                    var nextReservation = await CreateSingleReservationAsync(new CreateReservationDto
-                    {
-                        MemberId = dto.MemberId,
-                        EquipmentId = dto.EquipmentId,
-                        TimeSlotId = nextSlot.TimeSlotId,
-                        Date = dto.Date
-                    });
-                    result.Add(nextReservation);
-                }
-            }
+                    var isValid = await ValidateReservationAsync(dto.MemberId, dto.Date, timeSlotId, dto.EquipmentId);
+                    _logger.LogInformation("Slot validation result for TimeSlotId {TimeSlotId}: {IsValid}", timeSlotId, isValid);
 
-            return result;
+                    if (!isValid)
+                    {
+                        throw new ValidationException($"Invalid reservation request for time slot {timeSlotId}");
+                    }
+                }
+
+                // Create reservation with multiple timeslots
+                var reservationDto = await CreateReservationWithTimeSlotsAsync(dto);
+                _logger.LogInformation("Created reservation with ID: {ReservationId}", reservationDto.ReservationId);
+                result.Add(reservationDto);
+
+                _logger.LogInformation("Successfully created reservation with IDs: {@ReservationIds}", 
+                    result.Select(r => r.ReservationId));
+                    
+                return result;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error during reservation creation");
+                throw;
+            }
         }
 
-        private async Task<ReservationDto> CreateSingleReservationAsync(CreateReservationDto dto)
+        private async Task<ReservationDto> CreateReservationWithTimeSlotsAsync(CreateReservationDto dto)
         {
+            _logger.LogInformation("Creating reservation with multiple timeslots: {@Dto}", dto);
+            
+            var timeSlots = new List<TimeSlot>();
+            foreach (var timeSlotId in dto.TimeSlotIds)
+            {
+                var timeSlot = await _timeSlotRepository.GetByIdAsync(timeSlotId);
+                if (timeSlot == null)
+                {
+                    _logger.LogWarning("Invalid time slot ID: {TimeSlotId}", timeSlotId);
+                    throw new ValidationException("Invalid time slot");
+                }
+                timeSlots.Add(timeSlot);
+            }
+
+            var equipment = await _equipmentRepository.GetByIdAsync(dto.EquipmentId);
+            if (equipment == null)
+            {
+                _logger.LogWarning("Invalid equipment ID: {EquipmentId}", dto.EquipmentId);
+                throw new ValidationException("Invalid equipment");
+            }
+
             var reservation = new Reservation
             {
                 MemberId = dto.MemberId,
                 EquipmentId = dto.EquipmentId,
-                TimeSlotId = dto.TimeSlotId,
-                Date = dto.Date
+                Date = dto.Date,
+                Equipment = equipment,
+                TimeSlots = timeSlots
             };
 
-            var createdReservation = await _repository.AddAsync(reservation);
-            var equipment = await _equipmentRepository.GetByIdAsync(createdReservation.EquipmentId);
-            var timeSlot = await _timeSlotRepository.GetByIdAsync(createdReservation.TimeSlotId);
-        
-            createdReservation.Equipment = equipment;
-            createdReservation.TimeSlot = timeSlot;
+            // Save and get the updated entity with its ID
+            reservation = await _repository.AddAsync(reservation);
+            _logger.LogInformation("Created reservation with ID: {ReservationId}", reservation.ReservationId);
 
-            return MapToDto(createdReservation);
+            return MapToDto(reservation);
         }
 
         public async Task DeleteReservationAsync(int id)
@@ -109,7 +131,7 @@ namespace Fitness.Business.Services
 
         public async Task<bool> ValidateReservationAsync(int memberId, DateTime date, int timeSlotId, int equipmentId)
         {
-            // check dagelijkse limiet (max 4 slots per dag)
+            // Check daily limit (max 4 slots per day)
             var dailyCount = await _repository.GetDailyReservationCountAsync(memberId, date);
             if (dailyCount >= 4) 
             {
@@ -117,7 +139,7 @@ namespace Fitness.Business.Services
                 return false;
             }
 
-            // check of equipment al gereserveerd is voor het tijdslot
+            // Check if time slot is already reserved for this equipment
             var hasConflict = await _repository.HasConflictingReservationAsync(date, timeSlotId, equipmentId);
             if (hasConflict)
             {
@@ -146,7 +168,7 @@ namespace Fitness.Business.Services
                 reservation.ReservationId,
                 reservation.Date,
                 reservation.Equipment?.DeviceType ?? "Unknown Equipment",
-                FormatTimeSlot(reservation.TimeSlot)
+                string.Join(", ", reservation.TimeSlots.Select(ts => FormatTimeSlot(ts)))
             );
         }
 

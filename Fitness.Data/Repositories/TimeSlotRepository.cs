@@ -30,16 +30,18 @@ namespace Fitness.Data.Repositories
         public async Task<IEnumerable<TimeSlot>> GetAvailableForDateAsync(DateTime date)
         {
             return await _dbSet
-                .Where(ts => !_context.Reservations
-                    .Any(r => r.TimeSlotId == ts.TimeSlotId && r.Date.Date == date.Date))
+                .Where(ts => !ts.Reservations
+                    .Any(r => r.Date.Date == date.Date))
                 .OrderBy(ts => ts.StartTime)
                 .ToListAsync();
         }
 
         public async Task<bool> IsTimeSlotAvailableAsync(int timeSlotId, DateTime date)
         {
-            return !await _context.Reservations
-                .AnyAsync(r => r.TimeSlotId == timeSlotId && r.Date.Date == date.Date);
+            return !await _dbSet
+                .Where(ts => ts.TimeSlotId == timeSlotId)
+                .SelectMany(ts => ts.Reservations)
+                .AnyAsync(r => r.Date.Date == date.Date);
         }
 
         public async Task<TimeSlot?> GetNextConsecutiveSlotAsync(TimeSlot currentSlot)

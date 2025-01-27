@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
-using System.Threading.Tasks;
 using System.Linq;
+using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Fitness.Business.Interfaces;
 using Fitness.Business.Models;
@@ -17,10 +17,10 @@ namespace Fitness.Data.Repositories
         {
             return await _dbSet
                 .Include(r => r.Equipment)
-                .Include(r => r.TimeSlot)
+                .Include(r => r.TimeSlots)
                 .Where(r => r.MemberId == memberId)
                 .OrderBy(r => r.Date)
-                .ThenBy(r => r.TimeSlot.StartTime)
+                .ThenBy(r => r.TimeSlots.Min(ts => ts.StartTime))
                 .ToListAsync();
         }
 
@@ -28,9 +28,9 @@ namespace Fitness.Data.Repositories
         {
             return await _dbSet
                 .Include(r => r.Equipment)
-                .Include(r => r.TimeSlot)
+                .Include(r => r.TimeSlots)
                 .Where(r => r.Date.Date == date.Date)
-                .OrderBy(r => r.TimeSlot.StartTime)
+                .OrderBy(r => r.TimeSlots.Min(ts => ts.StartTime))
                 .ToListAsync();
         }
 
@@ -39,7 +39,7 @@ namespace Fitness.Data.Repositories
             return await _dbSet
                 .AnyAsync(r => r.MemberId == memberId 
                            && r.Date.Date == date.Date 
-                           && r.TimeSlotId == timeSlotId);
+                           && r.TimeSlots.Any(ts => ts.TimeSlotId == timeSlotId));
         }
 
         public async Task<int> GetDailyReservationCountAsync(int memberId, DateTime date)
@@ -50,21 +50,26 @@ namespace Fitness.Data.Repositories
 
         public async Task<bool> ValidateReservationAsync(int memberId, DateTime date, int timeSlotId, int equipmentId)
         {
-            // check dagelijkse limiet (max 4 slots per dag)
+            // Check daily limit (max 4 slots per day)
             var dailyCount = await GetDailyReservationCountAsync(memberId, date);
             if (dailyCount >= 4) return false;
 
-            // check of equipment al gereserveerd is voor het tijdslot
-            return !await HasConflictingReservationAsync(date, timeSlotId, equipmentId);
+            // Check if equipment is already reserved
+            var isEquipmentAvailable = !await _dbSet
+                .AnyAsync(r => r.EquipmentId == equipmentId 
+                           && r.Date.Date == date.Date 
+                           && r.TimeSlots.Any(ts => ts.TimeSlotId == timeSlotId));
+
+            return isEquipmentAvailable;
         }
 
         public async Task<IEnumerable<Reservation>> GetFutureReservationsAsync(int equipmentId)
         {
             return await _dbSet
-                .Include(r => r.TimeSlot)
+                .Include(r => r.TimeSlots)
                 .Where(r => r.EquipmentId == equipmentId && r.Date.Date >= DateTime.Today)
                 .OrderBy(r => r.Date)
-                .ThenBy(r => r.TimeSlot.StartTime)
+                .ThenBy(r => r.TimeSlots.Min(ts => ts.StartTime))
                 .ToListAsync();
         }
 
@@ -72,7 +77,7 @@ namespace Fitness.Data.Repositories
         {
             return await _dbSet
                 .AnyAsync(r => r.Date.Date == date.Date 
-                           && r.TimeSlotId == timeSlotId
+                           && r.TimeSlots.Any(ts => ts.TimeSlotId == timeSlotId)
                            && r.EquipmentId == equipmentId);
         }
 
@@ -80,8 +85,8 @@ namespace Fitness.Data.Repositories
         {
             return await _dbSet
                 .Include(r => r.Equipment)
-                .Include(r => r.TimeSlot)
-                .Where(r => r.Date.Date == date.Date && r.TimeSlotId == timeSlotId)
+                .Include(r => r.TimeSlots)
+                .Where(r => r.Date.Date == date.Date && r.TimeSlots.Any(ts => ts.TimeSlotId == timeSlotId))
                 .ToListAsync();
         }
     }

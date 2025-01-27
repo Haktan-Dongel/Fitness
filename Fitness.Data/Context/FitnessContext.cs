@@ -7,6 +7,17 @@ namespace Fitness.Data.Context
     {
         public FitnessContext(DbContextOptions<FitnessContext> options) : base(options) { }
 
+        // Add parameterless constructor for design-time context creation
+        public FitnessContext() { }
+
+        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+        {
+            if (!optionsBuilder.IsConfigured)
+            {
+                optionsBuilder.UseSqlServer("Server=.;Database=GymTest;Trusted_Connection=True;TrustServerCertificate=True;MultipleActiveResultSets=true");
+            }
+        }
+
         public DbSet<Member> Members { get; set; } = null!;
         public DbSet<Equipment> Equipment { get; set; } = null!;
         public DbSet<FitnessProgram> Programs { get; set; } = null!;
@@ -19,6 +30,8 @@ namespace Fitness.Data.Context
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            base.OnModelCreating(modelBuilder);
+
             modelBuilder.Entity<Member>(entity =>
             {
                 entity.ToTable("members");
@@ -65,7 +78,6 @@ namespace Fitness.Data.Context
                 entity.HasKey(e => e.ReservationId);
                 entity.Property(e => e.ReservationId).HasColumnName("reservation_id");
                 entity.Property(e => e.EquipmentId).HasColumnName("equipment_id");
-                entity.Property(e => e.TimeSlotId).HasColumnName("time_slot_id");
                 entity.Property(e => e.Date).HasColumnName("date");
                 entity.Property(e => e.MemberId).HasColumnName("member_id");
 
@@ -76,10 +88,6 @@ namespace Fitness.Data.Context
                 entity.HasOne(r => r.Equipment)
                     .WithMany(e => e.Reservations)
                     .HasForeignKey(r => r.EquipmentId);
-
-                entity.HasOne(r => r.TimeSlot)
-                    .WithMany(t => t.Reservations)
-                    .HasForeignKey(r => r.TimeSlotId);
             });
             modelBuilder.Entity<TimeSlot>(entity =>
             {
@@ -147,6 +155,26 @@ namespace Fitness.Data.Context
 
             modelBuilder.Entity<RunningSessionDetail>()
                 .HasKey(rd => new { rd.RunningSessionId, rd.SeqNr });
+
+            // Configure many-to-many relationship between Reservation and TimeSlot
+            modelBuilder.Entity<Reservation>()
+                .HasMany(r => r.TimeSlots)
+                .WithMany(t => t.Reservations)
+                .UsingEntity<Dictionary<string, object>>(
+                    "reservation_timeslot",
+                    j => j
+                        .HasOne<TimeSlot>()
+                        .WithMany()
+                        .HasForeignKey("time_slot_id"),
+                    j => j
+                        .HasOne<Reservation>()
+                        .WithMany()
+                        .HasForeignKey("reservation_id"),
+                    j =>
+                    {
+                        j.HasKey("reservation_id", "time_slot_id");
+                        j.ToTable("reservation_timeslot");
+                    });
         }
     }
 }

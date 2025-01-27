@@ -173,9 +173,8 @@ export interface Reservation {
 export interface CreateReservationDto {
   memberId: number;
   equipmentId: number;
-  timeSlotId: number;
+  timeSlotIds: number[];  // Change to array to handle multiple timeslots
   date: string;
-  includeNextSlot: boolean;  // Changed from IncludeNextSlot to match C# property
 }
 
 export interface DashboardStats {
@@ -288,6 +287,8 @@ export const timeSlotAPI = {
     api.get<TimeSlot[]>(`/timeslots/available`, {
       params: { date, equipmentId }
     }),
+  getNextConsecutiveSlot: (currentSlotId: number) => 
+    api.get<TimeSlot>(`/timeslots/next/${currentSlotId}`),
 };
 
 export const trainingAPI = {

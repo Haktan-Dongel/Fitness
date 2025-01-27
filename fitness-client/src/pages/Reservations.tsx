@@ -4,7 +4,7 @@ import {
 } from '@mui/material';
 import { DataGrid, GridColDef } from '@mui/x-data-grid';
 import DeleteIcon from '@mui/icons-material/Delete';
-import { reservationAPI, memberAPI, CreateReservationDto } from '../services/api';
+import { reservationAPI, memberAPI, timeSlotAPI, CreateReservationDto } from '../services/api';
 import CreateReservationDialog from '../components/CreateReservationDialog';
 import AddIcon from '@mui/icons-material/Add';
 import { useAuth } from '../contexts/AuthContext';
@@ -100,6 +100,16 @@ export default function Reservations() {
     }
   };
 
+  const getNextConsecutiveSlotId = async (currentSlotId: number) => {
+    try {
+      const response = await timeSlotAPI.getNextConsecutiveSlot(currentSlotId);
+      return response.data.timeSlotId;
+    } catch (error) {
+      console.error('Error fetching next consecutive slot:', error);
+      return null;
+    }
+  };
+
   useEffect(() => {
     fetchReservations();
   }, [selectedDate]);
@@ -174,12 +184,19 @@ export default function Reservations() {
               throw new Error('Must be logged in to create reservations');
             }
 
+            const timeSlotIds = [Number(formData.timeSlotId)];
+            if (formData.includeNextSlot) {
+              const nextSlotId = await getNextConsecutiveSlotId(Number(formData.timeSlotId));
+              if (nextSlotId) {
+                timeSlotIds.push(nextSlotId);
+              }
+            }
+
             const reservationData: CreateReservationDto = {
               memberId: user.memberId,
               equipmentId: Number(formData.equipmentId),
-              timeSlotId: Number(formData.timeSlotId),
+              timeSlotIds: timeSlotIds,  // Ensure this is an array
               date: formData.date,
-              includeNextSlot: formData.includeNextSlot  // Fixed case to match backend
             };
 
             console.log('Creating reservation:', reservationData);

@@ -76,15 +76,6 @@ namespace Fitness.API.Controllers
                     return BadRequest("Reservation data is required");
                 }
 
-                _logger.LogInformation("Validating reservation data: MemberId={MemberId}, EquipmentId={EquipmentId}, TimeSlotId={TimeSlotId}, Date={Date}, IncludeNextSlot={IncludeNextSlot}",
-                    dto.MemberId, dto.EquipmentId, dto.TimeSlotId, dto.Date, dto.IncludeNextSlot);
-
-                if (dto.MemberId == 0 || dto.EquipmentId == 0 || dto.TimeSlotId == 0)
-                {
-                    _logger.LogWarning("Invalid reservation data received: {@RequestDto}", dto);
-                    return BadRequest("Invalid reservation data");
-                }
-
                 var reservations = await _reservationService.CreateReservationsAsync(dto);
                 
                 _logger.LogInformation("Successfully created {Count} reservations", reservations.Count());

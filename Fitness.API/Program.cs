@@ -43,6 +43,8 @@ namespace Fitness.API
             // Registratie van services
             builder.Services.AddScoped<IMemberService, MemberService>();
             builder.Services.AddScoped<IReservationService, ReservationService>();
+            builder.Services.AddScoped<ICyclingSessionService, CyclingSessionService>();
+            builder.Services.AddScoped<IRunningSessionService, RunningSessionService>();
 
             builder.Services.AddControllers()
                 .AddJsonOptions(options =>

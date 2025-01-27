@@ -1,21 +1,29 @@
 using System;
 using System.Collections.Generic;
-using System.Threading.Tasks;
 using System.Linq;
+using System.Threading.Tasks;
 using Fitness.Business.DTOs;
 using Fitness.Business.Interfaces;
 using Fitness.Business.Models;
 using Fitness.Business.Exceptions;
+using Microsoft.Extensions.Logging;
 
 namespace Fitness.Business.Services
 {
     public class MemberService : IMemberService
     {
         private readonly IMemberRepository _memberRepository;
+        private readonly IReservationRepository _reservationRepository;
+        private readonly ILogger<MemberService> _logger;
 
-        public MemberService(IMemberRepository memberRepository)
+        public MemberService(
+            IMemberRepository memberRepository,
+            IReservationRepository reservationRepository,
+            ILogger<MemberService> logger)
         {
             _memberRepository = memberRepository;
+            _reservationRepository = reservationRepository;
+            _logger = logger;
         }
 
         public async Task<MemberDto> GetMemberAsync(int id)
@@ -136,15 +144,12 @@ namespace Fitness.Business.Services
 
         public async Task<IEnumerable<ReservationDto>> GetMemberReservationsAsync(int memberId)
         {
-            var member = await _memberRepository.GetByIdAsync(memberId);
-            if (member == null) throw new NotFoundException($"Member with ID {memberId} not found");
-
-            var reservations = await _memberRepository.GetReservationsAsync(memberId);
+            var reservations = await _reservationRepository.GetByMemberAsync(memberId);
             return reservations.Select(r => new ReservationDto(
                 r.ReservationId,
                 r.Date,
                 r.Equipment.DeviceType,
-                $"{r.TimeSlot.StartTime}:00 - {r.TimeSlot.EndTime}:00"
+                string.Join(", ", r.TimeSlots.Select(ts => $"{ts.StartTime}:00 - {ts.EndTime}:00"))
             ));
         }
 
@@ -180,6 +185,12 @@ namespace Fitness.Business.Services
                 )));
 
             return trainingSessions.OrderByDescending(ts => ts.Date);
+        }
+
+        public async Task<IEnumerable<TimeSlot>> GetMemberReservationTimeSlotsAsync(int memberId)
+        {
+            var reservations = await _reservationRepository.GetByMemberAsync(memberId);
+            return reservations.SelectMany(r => r.TimeSlots).Distinct();
         }
     }
 }
