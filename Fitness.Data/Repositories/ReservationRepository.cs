@@ -89,5 +89,25 @@ namespace Fitness.Data.Repositories
                 .Where(r => r.Date.Date == date.Date && r.TimeSlots.Any(ts => ts.TimeSlotId == timeSlotId))
                 .ToListAsync();
         }
+
+        public override async Task<Reservation?> GetByIdAsync(int id)
+        {
+            return await _dbSet
+                .Include(r => r.TimeSlots)
+                .FirstOrDefaultAsync(r => r.ReservationId == id);
+        }
+
+        public override async Task DeleteAsync(Reservation entity)
+        {
+            try
+            {
+                _dbSet.Remove(entity);
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateException ex)
+            {
+                throw new InvalidOperationException($"Error deleting reservation {entity.ReservationId}", ex);
+            }
+        }
     }
 }

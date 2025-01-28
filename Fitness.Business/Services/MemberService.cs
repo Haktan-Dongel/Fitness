@@ -160,7 +160,7 @@ namespace Fitness.Business.Services
 
             var trainingSessions = new List<TrainingSessionDto>();
 
-            // Get cycling sessions
+            // cycling sessions
             var cyclingSessions = await _memberRepository.GetCyclingSessionsAsync(memberId);
             trainingSessions.AddRange(cyclingSessions
                 .Where(cs => !fromDate.HasValue || cs.Date >= fromDate.Value)
@@ -172,7 +172,7 @@ namespace Fitness.Business.Services
                     $"Avg Watt: {cs.AvgWatt}, Max Watt: {cs.MaxWatt}"
                 )));
 
-            // Get running sessions
+            // running sessions
             var runningSessions = await _memberRepository.GetRunningSessionsAsync(memberId);
             trainingSessions.AddRange(runningSessions
                 .Where(rs => !fromDate.HasValue || rs.Date >= fromDate.Value)

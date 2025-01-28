@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react';
 import { 
   Dialog, DialogTitle, DialogContent, DialogActions,
   Button, TextField, MenuItem, Alert,
-  CircularProgress, FormControl, InputLabel, Select, Grid
+  CircularProgress, FormControl, InputLabel, Select, Grid,
+  List, ListItem, ListItemText, Checkbox, ListItemButton, Box, Typography  // Add Box and Typography imports
 } from '@mui/material';
 import { equipmentAPI, timeSlotAPI, Equipment as ApiEquipment } from '../services/api';
 
@@ -19,8 +20,7 @@ interface TimeSlot {
 interface FormData {
   date: string;
   equipmentId: number;
-  timeSlotId: number;
-  includeNextSlot: boolean;
+  timeSlotIds: number[];
 }
 
 interface CreateReservationDialogProps {
@@ -33,8 +33,7 @@ export default function CreateReservationDialog({ open, onClose, onSave }: Creat
   const [formData, setFormData] = useState<FormData>({
     date: new Date().toISOString().split('T')[0],
     equipmentId: 0,
-    timeSlotId: 0,
-    includeNextSlot: false
+    timeSlotIds: []
   });
 
   const [availableEquipment, setAvailableEquipment] = useState<Equipment[]>([]);
@@ -43,46 +42,49 @@ export default function CreateReservationDialog({ open, onClose, onSave }: Creat
   const [error] = useState<string | null>(null);
 
   useEffect(() => {
-    if (open && formData.date) {
+    if (open && formData.date && formData.equipmentId) {
       const fetchAvailability = async () => {
         setLoading(true);
         try {
-          let equipment = [];
-          let timeSlots = [];
-          
-          if (formData.timeSlotId) {
-            const availableEquipment = await equipmentAPI.getAvailable(formData.date, formData.timeSlotId);
-            equipment = availableEquipment.data.map(e => ({
-              ...e,
-              name: e.deviceType
-            }));
-          } else {
-            const allEquipment = await equipmentAPI.getAll();
-            equipment = allEquipment.data.map(e => ({
-              ...e,
-              name: e.deviceType
-            }));
-          }
-
-          if (formData.equipmentId) {
-            const availableTimeSlots = await timeSlotAPI.getAvailable(formData.date, formData.equipmentId);
-            timeSlots = availableTimeSlots.data;
-          } else {
-            const allTimeSlots = await timeSlotAPI.getAll();
-            timeSlots = allTimeSlots.data;
-          }
-
-          setAvailableEquipment(equipment);
-          setAvailableTimeSlots(timeSlots);
+          const availableTimeSlots = await timeSlotAPI.getAvailable(formData.date, formData.equipmentId);
+          setAvailableTimeSlots(availableTimeSlots.data);
         } catch (error) {
-          console.error('Error fetching availability:', error);
+          console.error('Error fetching time slots:', error);
         }
         setLoading(false);
       };
 
       fetchAvailability();
     }
-  }, [open, formData.date, formData.timeSlotId, formData.equipmentId]);
+  }, [open, formData.date, formData.equipmentId]);
+
+  useEffect(() => {
+    if (open) {
+      const fetchEquipment = async () => {
+        setLoading(true);
+        try {
+          const allEquipment = await equipmentAPI.getAll();
+          setAvailableEquipment(allEquipment.data.map(e => ({
+            ...e,
+            name: e.deviceType
+          })));
+        } catch (error) {
+          console.error('Error fetching equipment:', error);
+        }
+        setLoading(false);
+      };
+
+      fetchEquipment();
+    }
+  }, [open]);
+
+  const handleReset = () => {
+    // reset timeslot selectie
+    setFormData(prev => ({
+      ...prev,
+      timeSlotIds: []
+    }));
+  };
 
   const formatTimeSlot = (timeSlot: TimeSlot): string => {
     const start = timeSlot.startTime.toString().split('T')[1]?.substring(0, 5) || timeSlot.startTime;
@@ -90,20 +92,69 @@ export default function CreateReservationDialog({ open, onClose, onSave }: Creat
     return `${start} - ${end}`;
   };
 
-  const handleTimeSlotChange = (event: { target: { value: unknown } }) => {
-    const timeSlotId = event.target.value as number;
-    setFormData(prev => ({ 
-      ...prev, 
-      timeSlotId,
-      // Reset includeNextSlot when changing time slot
-      includeNextSlot: false
-    }));
+  const findNextConsecutiveSlot = (currentSlot: TimeSlot): TimeSlot | undefined => {
+    const currentEndTime = new Date(currentSlot.endTime).getTime();
+    return availableTimeSlots.find(slot => 
+      new Date(slot.startTime).getTime() === currentEndTime
+    );
+  };
+
+  const handleTimeSlotToggle = (slot: TimeSlot) => {
+    const currentSlots = [...formData.timeSlotIds];
+    const slotId = slot.timeSlotId;
+    
+    if (currentSlots.includes(slotId)) {
+      if (currentSlots[0] === slotId) {
+        setFormData(prev => ({ ...prev, timeSlotIds: [] }));
+      }
+      else {
+        setFormData(prev => ({
+          ...prev,
+          timeSlotIds: [currentSlots[0]]
+        }));
+      }
+      return;
+    }
+    if (currentSlots.length === 0) {
+      setFormData(prev => ({
+        ...prev,
+        timeSlotIds: [slotId]
+      }));
+      return;
+    }
+
+    const selectedSlot = availableTimeSlots.find(s => s.timeSlotId === currentSlots[0]);
+    if (selectedSlot) {
+      const nextConsecutive = findNextConsecutiveSlot(selectedSlot);
+      if (nextConsecutive?.timeSlotId === slotId) {
+        setFormData(prev => ({
+          ...prev,
+          timeSlotIds: [...prev.timeSlotIds, slotId]
+        }));
+      }
+    }
+  };
+
+  const isSelectable = (slot: TimeSlot): boolean => {
+    const currentSlots = formData.timeSlotIds;
+    if (currentSlots.length === 0) return true;
+    
+    // check of de geselecteerde slot een volgende heeft
+    if (currentSlots.length === 1) {
+      const selectedSlot = availableTimeSlots.find(s => s.timeSlotId === currentSlots[0]);
+      if (selectedSlot) {
+        const nextConsecutive = findNextConsecutiveSlot(selectedSlot);
+        return slot.timeSlotId === nextConsecutive?.timeSlotId;
+      }
+    }
+
+    return false;
   };
 
   const isValidSelection = () => {
     return formData.date && 
            formData.equipmentId && 
-           formData.timeSlotId > 0 &&
+           formData.timeSlotIds.length > 0 &&
            !error;
   };
 
@@ -128,7 +179,13 @@ export default function CreateReservationDialog({ open, onClose, onSave }: Creat
               <InputLabel>Equipment</InputLabel>
               <Select
                 value={formData.equipmentId || ''}
-                onChange={(e) => setFormData({ ...formData, equipmentId: Number(e.target.value) })}
+                onChange={(e) => {
+                  setFormData({ 
+                    ...formData, 
+                    equipmentId: Number(e.target.value),
+                    timeSlotIds: [] //reset timeslot selectie wanneer equipment verandert
+                  });
+                }}
                 disabled={loading}
               >
                 {availableEquipment.map((item) => (
@@ -139,41 +196,62 @@ export default function CreateReservationDialog({ open, onClose, onSave }: Creat
               </Select>
             </FormControl>
           </Grid>
-          <Grid item xs={12}>
-            <FormControl fullWidth>
-              <InputLabel>Time Slot</InputLabel>
-              <Select
-                value={formData.timeSlotId || ''}
-                onChange={handleTimeSlotChange}
-                disabled={loading}
-              >
-                {availableTimeSlots.map((slot) => (
-                  <MenuItem key={slot.timeSlotId} value={slot.timeSlotId}>
-                    {formatTimeSlot(slot)}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-          </Grid>
-          <Grid item xs={12}>
-            <FormControl fullWidth>
-              <Button
-                onClick={() => setFormData(prev => ({ ...prev, includeNextSlot: !prev.includeNextSlot }))}
-                disabled={!formData.timeSlotId}
-                color={formData.includeNextSlot ? "primary" : "inherit"}
-                variant={formData.includeNextSlot ? "contained" : "outlined"}
-              >
-                {formData.includeNextSlot ? "Include Next Slot ✓" : "Include Next Slot"}
-              </Button>
-            </FormControl>
-          </Grid>
+          {formData.equipmentId > 0 && (
+            <Grid item xs={12}>
+              {loading ? (
+                <Box display="flex" justifyContent="center">
+                  <CircularProgress />
+                </Box>
+              ) : (
+                <>
+                  <Typography variant="subtitle1" gutterBottom>
+                    Available Time Slots (Select up to 2 consecutive slots):
+                  </Typography>
+                  <List>
+                    {availableTimeSlots.map((slot) => (
+                      <ListItem
+                        key={slot.timeSlotId}
+                        disablePadding
+                      >
+                        <ListItemButton
+                          dense
+                          onClick={() => handleTimeSlotToggle(slot)}
+                          disabled={!isSelectable(slot) && !formData.timeSlotIds.includes(slot.timeSlotId)}
+                        >
+                          <Checkbox
+                            edge="start"
+                            checked={formData.timeSlotIds.includes(slot.timeSlotId)}
+                            disabled={!isSelectable(slot) && !formData.timeSlotIds.includes(slot.timeSlotId)}
+                          />
+                          <ListItemText 
+                            primary={formatTimeSlot(slot)}
+                            secondary={formData.timeSlotIds.length === 1 && !isSelectable(slot) ? 
+                              "Not consecutive" : undefined}
+                          />
+                        </ListItemButton>
+                      </ListItem>
+                    ))}
+                  </List>
+                </>
+              )}
+            </Grid>
+          )}
         </Grid>
       </DialogContent>
       <DialogActions>
+        <Button 
+          onClick={handleReset}
+          color="inherit"
+          disabled={loading}
+        >
+          Reset
+        </Button>
         <Button onClick={onClose}>Cancel</Button>
         <Button 
           onClick={() => onSave(formData)}
           disabled={loading || !isValidSelection()}
+          color="primary"
+          variant="contained"
         >
           {loading ? <CircularProgress size={24} /> : 'Create'}
         </Button>

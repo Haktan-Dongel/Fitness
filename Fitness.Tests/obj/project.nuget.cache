@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "aCl7WX9HeFc=",
+  "dgSpecHash": "ER4rSYS/f7k=",
   "success": true,
-  "projectFilePath": "C:\\Users\\hakta\\source\\repos\\Fitness\\Fitness.Tests\\Fitness.Tests.csproj",
+  "projectFilePath": "C:\\Users\\hakta\\OneDrive\\Gr24-25\\Programmeren Gevorderd 2\\YouMove\\Fitness\\Fitness.Tests\\Fitness.Tests.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\hakta\\.nuget\\packages\\azure.core\\1.38.0\\azure.core.1.38.0.nupkg.sha512",
     "C:\\Users\\hakta\\.nuget\\packages\\azure.identity\\1.11.4\\azure.identity.1.11.4.nupkg.sha512",
@@ -85,10 +85,7 @@
     "C:\\Users\\hakta\\.nuget\\packages\\xunit.core\\2.9.2\\xunit.core.2.9.2.nupkg.sha512",
     "C:\\Users\\hakta\\.nuget\\packages\\xunit.extensibility.core\\2.9.2\\xunit.extensibility.core.2.9.2.nupkg.sha512",
     "C:\\Users\\hakta\\.nuget\\packages\\xunit.extensibility.execution\\2.9.2\\xunit.extensibility.execution.2.9.2.nupkg.sha512",
-    "C:\\Users\\hakta\\.nuget\\packages\\xunit.runner.visualstudio\\3.0.0\\xunit.runner.visualstudio.3.0.0.nupkg.sha512",
-    "C:\\Users\\hakta\\.nuget\\packages\\microsoft.netcore.app.ref\\8.0.11\\microsoft.netcore.app.ref.8.0.11.nupkg.sha512",
-    "C:\\Users\\hakta\\.nuget\\packages\\microsoft.windowsdesktop.app.ref\\8.0.11\\microsoft.windowsdesktop.app.ref.8.0.11.nupkg.sha512",
-    "C:\\Users\\hakta\\.nuget\\packages\\microsoft.aspnetcore.app.ref\\8.0.11\\microsoft.aspnetcore.app.ref.8.0.11.nupkg.sha512"
+    "C:\\Users\\hakta\\.nuget\\packages\\xunit.runner.visualstudio\\3.0.0\\xunit.runner.visualstudio.3.0.0.nupkg.sha512"
   ],
   "logs": []
 }

@@ -107,15 +107,15 @@ export interface UpdateMemberDto {
 
 export interface TimeSlot {
   timeSlotId: number;
-  startTime: Date | string;  // Update type to handle both Date and string
-  endTime: Date | string;    // Update type to handle both Date and string
+  startTime: Date | string;
+  endTime: Date | string;
   slotNumber: number;
   partOfDay: string;
 }
 
 export interface Equipment {
   equipmentId: number;
-  deviceType: string;  // Changed from description to deviceType
+  deviceType: string;
   isAvailable?: boolean;
 }
 
@@ -173,7 +173,7 @@ export interface Reservation {
 export interface CreateReservationDto {
   memberId: number;
   equipmentId: number;
-  timeSlotIds: number[];  // Change to array to handle multiple timeslots
+  timeSlotIds: number[];
   date: string;
 }
 
@@ -257,13 +257,29 @@ export const reservationAPI = {
   getById: (id: number) => api.get<Reservation>(`/reservations/${id}`),
   create: (data: CreateReservationDto) => {
     console.log('Creating reservation with payload:', data);
-    return api.post<ReservationDto[]>('/reservations', data)  // Changed return type to array
+    return api.post<ReservationDto[]>('/reservations', data)
       .catch(error => {
         console.error('Reservation creation failed:', error.response?.data);
         throw error;
       });
   },
-  delete: (id: number) => api.delete(`/reservations/${id}`),
+  delete: async (id: number): Promise<void> => {
+    console.log('🗑️ Deleting reservation:', id);
+    try {
+      const response = await api.delete(`/reservations/${id}`);
+      console.log('✅ Successfully deleted reservation:', id);
+      return response.data;
+    } catch (error) {
+      console.error('❌ Error deleting reservation:', error);
+      if (axios.isAxiosError(error)) {
+        if (error.response?.status === 404) {
+          throw new Error('Reservation not found');
+        }
+        throw new Error(error.response?.data || 'Failed to delete reservation');
+      }
+      throw new Error('Network error while deleting reservation');
+    }
+  },
   getCurrentUserReservations: () => api.get<Reservation[]>('/reservations/me'),
 };
 

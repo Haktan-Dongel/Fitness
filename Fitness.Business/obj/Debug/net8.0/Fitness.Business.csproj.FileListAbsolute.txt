@@ -11,3 +11,16 @@ C:\Users\hakta\source\repos\Fitness\Fitness.Business\obj\Debug\net8.0\Fitness.Bu
 C:\Users\hakta\source\repos\Fitness\Fitness.Business\obj\Debug\net8.0\refint\Fitness.Business.dll
 C:\Users\hakta\source\repos\Fitness\Fitness.Business\obj\Debug\net8.0\Fitness.Business.pdb
 C:\Users\hakta\source\repos\Fitness\Fitness.Business\obj\Debug\net8.0\ref\Fitness.Business.dll
+C:\Users\hakta\OneDrive\Gr24-25\Programmeren Gevorderd 2\YouMove\Fitness\Fitness.Business\bin\Debug\net8.0\Fitness.Business.deps.json
+C:\Users\hakta\OneDrive\Gr24-25\Programmeren Gevorderd 2\YouMove\Fitness\Fitness.Business\bin\Debug\net8.0\Fitness.Business.dll
+C:\Users\hakta\OneDrive\Gr24-25\Programmeren Gevorderd 2\YouMove\Fitness\Fitness.Business\bin\Debug\net8.0\Fitness.Business.pdb
+C:\Users\hakta\OneDrive\Gr24-25\Programmeren Gevorderd 2\YouMove\Fitness\Fitness.Business\obj\Debug\net8.0\Fitness.Business.csproj.AssemblyReference.cache
+C:\Users\hakta\OneDrive\Gr24-25\Programmeren Gevorderd 2\YouMove\Fitness\Fitness.Business\obj\Debug\net8.0\Fitness.Business.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\hakta\OneDrive\Gr24-25\Programmeren Gevorderd 2\YouMove\Fitness\Fitness.Business\obj\Debug\net8.0\Fitness.Business.AssemblyInfoInputs.cache
+C:\Users\hakta\OneDrive\Gr24-25\Programmeren Gevorderd 2\YouMove\Fitness\Fitness.Business\obj\Debug\net8.0\Fitness.Business.AssemblyInfo.cs
+C:\Users\hakta\OneDrive\Gr24-25\Programmeren Gevorderd 2\YouMove\Fitness\Fitness.Business\obj\Debug\net8.0\Fitness.Business.csproj.CoreCompileInputs.cache
+C:\Users\hakta\OneDrive\Gr24-25\Programmeren Gevorderd 2\YouMove\Fitness\Fitness.Business\obj\Debug\net8.0\Fitness.Business.sourcelink.json
+C:\Users\hakta\OneDrive\Gr24-25\Programmeren Gevorderd 2\YouMove\Fitness\Fitness.Business\obj\Debug\net8.0\Fitness.Business.dll
+C:\Users\hakta\OneDrive\Gr24-25\Programmeren Gevorderd 2\YouMove\Fitness\Fitness.Business\obj\Debug\net8.0\refint\Fitness.Business.dll
+C:\Users\hakta\OneDrive\Gr24-25\Programmeren Gevorderd 2\YouMove\Fitness\Fitness.Business\obj\Debug\net8.0\Fitness.Business.pdb
+C:\Users\hakta\OneDrive\Gr24-25\Programmeren Gevorderd 2\YouMove\Fitness\Fitness.Business\obj\Debug\net8.0\ref\Fitness.Business.dll

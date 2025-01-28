@@ -99,21 +99,27 @@ namespace Fitness.API.Controllers
         }
 
         [HttpDelete("{id}")]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> DeleteReservation(int id)
         {
             try
             {
+                _logger.LogInformation("Attempting to delete reservation {Id}", id);
                 await _reservationService.DeleteReservationAsync(id);
+                _logger.LogInformation("Successfully deleted reservation {Id}", id);
                 return NoContent();
             }
             catch (NotFoundException ex)
             {
+                _logger.LogWarning(ex.Message);
                 return NotFound(ex.Message);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error deleting reservation {ReservationId}", id);
-                return StatusCode(500, "Error deleting reservation");
+                _logger.LogError(ex, "Error deleting reservation {Id}", id);
+                return StatusCode(500, "An error occurred while deleting the reservation");
             }
         }
     }

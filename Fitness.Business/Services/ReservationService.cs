@@ -52,7 +52,7 @@ namespace Fitness.Business.Services
 
             try
             {
-                // Validate each time slot
+                // Valideer de reservering voor elk tijdslot
                 foreach (var timeSlotId in dto.TimeSlotIds)
                 {
                     var isValid = await ValidateReservationAsync(dto.MemberId, dto.Date, timeSlotId, dto.EquipmentId);
@@ -64,7 +64,7 @@ namespace Fitness.Business.Services
                     }
                 }
 
-                // Create reservation with multiple timeslots
+                // maak reservation met meerdere timeslots
                 var reservationDto = await CreateReservationWithTimeSlotsAsync(dto);
                 _logger.LogInformation("Created reservation with ID: {ReservationId}", reservationDto.ReservationId);
                 result.Add(reservationDto);
@@ -113,7 +113,7 @@ namespace Fitness.Business.Services
                 TimeSlots = timeSlots
             };
 
-            // Save and get the updated entity with its ID
+            // sla de reservering op
             reservation = await _repository.AddAsync(reservation);
             _logger.LogInformation("Created reservation with ID: {ReservationId}", reservation.ReservationId);
 
@@ -124,14 +124,34 @@ namespace Fitness.Business.Services
         {
             var reservation = await _repository.GetByIdAsync(id);
             if (reservation == null)
+            {
+                _logger.LogWarning("Attempted to delete non-existent reservation with ID: {Id}", id);
                 throw new NotFoundException($"Reservation {id} not found");
+            }
 
-            await _repository.DeleteAsync(reservation);
+            try
+            {
+                _logger.LogInformation("Deleting reservation {Id} with {Count} time slots", 
+                    id, reservation.TimeSlots?.Count ?? 0);
+                
+                if (reservation.TimeSlots != null)
+                {
+                    reservation.TimeSlots.Clear();
+                }
+
+                await _repository.DeleteAsync(reservation);
+                _logger.LogInformation("Successfully deleted reservation {Id}", id);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to delete reservation {Id}", id);
+                throw new InvalidOperationException($"Failed to delete reservation {id}", ex);
+            }
         }
 
         public async Task<bool> ValidateReservationAsync(int memberId, DateTime date, int timeSlotId, int equipmentId)
         {
-            // Check daily limit (max 4 slots per day)
+            // Check dagelijks limiet, max 4 slots per dag
             var dailyCount = await _repository.GetDailyReservationCountAsync(memberId, date);
             if (dailyCount >= 4) 
             {
@@ -139,7 +159,7 @@ namespace Fitness.Business.Services
                 return false;
             }
 
-            // Check if time slot is already reserved for this equipment
+            // Check of equipment al gereserveerd is op hetzelfde tijdstip
             var hasConflict = await _repository.HasConflictingReservationAsync(date, timeSlotId, equipmentId);
             if (hasConflict)
             {

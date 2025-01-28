@@ -4,7 +4,7 @@ import {
 } from '@mui/material';
 import { DataGrid, GridColDef } from '@mui/x-data-grid';
 import DeleteIcon from '@mui/icons-material/Delete';
-import { reservationAPI, memberAPI, timeSlotAPI, CreateReservationDto } from '../services/api';
+import { reservationAPI, memberAPI, CreateReservationDto } from '../services/api';
 import CreateReservationDialog from '../components/CreateReservationDialog';
 import AddIcon from '@mui/icons-material/Add';
 import { useAuth } from '../contexts/AuthContext';
@@ -20,11 +20,69 @@ interface EnhancedReservation {
 
 export default function Reservations() {
   const [loading, setLoading] = useState(true);
+  const [deleteInProgress, setDeleteInProgress] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedDate] = useState(new Date().toISOString().split('T')[0]);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const { user } = useAuth();
   const [enhancedReservations, setEnhancedReservations] = useState<EnhancedReservation[]>([]);
+
+  const handleDelete = async (id: number) => {
+    try {
+      setDeleteInProgress(true);
+      setError(null);
+      
+      if (!id) {
+        throw new Error('Invalid reservation ID');
+      }
+
+      await reservationAPI.delete(id);
+      await fetchReservations();
+      
+    } catch (error) {
+      console.error('Error deleting reservation:', error);
+      setError('Failed to delete reservation. Please try again.');
+    } finally {
+      setDeleteInProgress(false);
+    }
+  };
+
+  const fetchReservations = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      if (!user) {
+        setError('Must be logged in to view reservations');
+        return;
+      }
+
+      const response = await memberAPI.getReservations(user.memberId);
+      
+      const enhanced = response.data.map(reservation => ({
+        reservationId: reservation.reservationId,
+        memberName: user ? `${user.firstName} ${user.lastName}` : 'Unknown',
+        equipmentName: reservation.equipment,
+        timeSlotName: reservation.timeSlot,
+        date: reservation.date,
+        isPast: new Date(reservation.date) < new Date()
+      }));
+
+      setEnhancedReservations(enhanced);
+    } catch (error) {
+      console.error('Error fetching reservations:', error);
+      setError('Failed to load reservations');
+      setEnhancedReservations([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (!deleteInProgress) {
+      fetchReservations();
+    }
+  }, [selectedDate, deleteInProgress, user]);
 
   const columns: GridColDef[] = [
     { field: 'reservationId', headerName: 'ID', width: 90 },
@@ -48,71 +106,18 @@ export default function Reservations() {
           startIcon={<DeleteIcon />}
           color="error"
           size="small"
-          onClick={() => handleDelete(params.row.reservationId)}
+          onClick={(e) => {
+            e.stopPropagation();
+            e.preventDefault();
+            handleDelete(params.row.reservationId);
+          }}
+          disabled={deleteInProgress || params.row.isPast}
         >
-          Delete
+          {deleteInProgress ? 'Deleting...' : 'Delete'}
         </Button>
       ),
     }
   ];
-
-  const fetchReservations = async () => {
-    try {
-      setLoading(true);
-      
-      if (!user) {
-        setError('Must be logged in to view reservations');
-        return;
-      }
-
-      const reservationsResponse = await memberAPI.getReservations(user.memberId);
-      console.log('Reservations response:', reservationsResponse.data);
-
-      // Convert MemberReservationView to EnhancedReservation
-      const enhanced = reservationsResponse.data.map(reservation => ({
-        reservationId: reservation.reservationId,
-        memberName: user ? `${user.firstName} ${user.lastName}` : 'Unknown',
-        equipmentName: reservation.equipment,
-        timeSlotName: reservation.timeSlot,
-        date: reservation.date,
-        isPast: new Date(reservation.date) < new Date()
-      }));
-
-      console.log('Enhanced reservations:', enhanced);
-      setEnhancedReservations(enhanced);
-      setError(null);
-    } catch (error) {
-      console.error('Error fetching reservations:', error);
-      setError('Failed to load reservations');
-      setEnhancedReservations([]);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleDelete = async (id: number) => {
-    try {
-      await reservationAPI.delete(id);
-      await fetchReservations();
-    } catch (error) {
-      console.error('Error deleting reservation:', error);
-      setError('Failed to delete reservation');
-    }
-  };
-
-  const getNextConsecutiveSlotId = async (currentSlotId: number) => {
-    try {
-      const response = await timeSlotAPI.getNextConsecutiveSlot(currentSlotId);
-      return response.data.timeSlotId;
-    } catch (error) {
-      console.error('Error fetching next consecutive slot:', error);
-      return null;
-    }
-  };
-
-  useEffect(() => {
-    fetchReservations();
-  }, [selectedDate]);
 
   if (loading) return <CircularProgress />;
   if (error) return <Alert severity="error">{error}</Alert>;
@@ -184,18 +189,10 @@ export default function Reservations() {
               throw new Error('Must be logged in to create reservations');
             }
 
-            const timeSlotIds = [Number(formData.timeSlotId)];
-            if (formData.includeNextSlot) {
-              const nextSlotId = await getNextConsecutiveSlotId(Number(formData.timeSlotId));
-              if (nextSlotId) {
-                timeSlotIds.push(nextSlotId);
-              }
-            }
-
             const reservationData: CreateReservationDto = {
               memberId: user.memberId,
               equipmentId: Number(formData.equipmentId),
-              timeSlotIds: timeSlotIds,  // Ensure this is an array
+              timeSlotIds: formData.timeSlotIds,
               date: formData.date,
             };
 

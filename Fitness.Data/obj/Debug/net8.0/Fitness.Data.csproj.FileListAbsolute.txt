@@ -16,3 +16,21 @@ C:\Users\hakta\source\repos\Fitness\Fitness.Data\obj\Debug\net8.0\refint\Fitness
 C:\Users\hakta\source\repos\Fitness\Fitness.Data\obj\Debug\net8.0\Fitness.Data.pdb
 C:\Users\hakta\source\repos\Fitness\Fitness.Data\obj\Debug\net8.0\Fitness.Data.genruntimeconfig.cache
 C:\Users\hakta\source\repos\Fitness\Fitness.Data\obj\Debug\net8.0\ref\Fitness.Data.dll
+C:\Users\hakta\OneDrive\Gr24-25\Programmeren Gevorderd 2\YouMove\Fitness\Fitness.Data\bin\Debug\net8.0\Fitness.Data.deps.json
+C:\Users\hakta\OneDrive\Gr24-25\Programmeren Gevorderd 2\YouMove\Fitness\Fitness.Data\bin\Debug\net8.0\Fitness.Data.runtimeconfig.json
+C:\Users\hakta\OneDrive\Gr24-25\Programmeren Gevorderd 2\YouMove\Fitness\Fitness.Data\bin\Debug\net8.0\Fitness.Data.dll
+C:\Users\hakta\OneDrive\Gr24-25\Programmeren Gevorderd 2\YouMove\Fitness\Fitness.Data\bin\Debug\net8.0\Fitness.Data.pdb
+C:\Users\hakta\OneDrive\Gr24-25\Programmeren Gevorderd 2\YouMove\Fitness\Fitness.Data\bin\Debug\net8.0\Fitness.Business.dll
+C:\Users\hakta\OneDrive\Gr24-25\Programmeren Gevorderd 2\YouMove\Fitness\Fitness.Data\bin\Debug\net8.0\Fitness.Business.pdb
+C:\Users\hakta\OneDrive\Gr24-25\Programmeren Gevorderd 2\YouMove\Fitness\Fitness.Data\obj\Debug\net8.0\Fitness.Data.csproj.AssemblyReference.cache
+C:\Users\hakta\OneDrive\Gr24-25\Programmeren Gevorderd 2\YouMove\Fitness\Fitness.Data\obj\Debug\net8.0\Fitness.Data.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\hakta\OneDrive\Gr24-25\Programmeren Gevorderd 2\YouMove\Fitness\Fitness.Data\obj\Debug\net8.0\Fitness.Data.AssemblyInfoInputs.cache
+C:\Users\hakta\OneDrive\Gr24-25\Programmeren Gevorderd 2\YouMove\Fitness\Fitness.Data\obj\Debug\net8.0\Fitness.Data.AssemblyInfo.cs
+C:\Users\hakta\OneDrive\Gr24-25\Programmeren Gevorderd 2\YouMove\Fitness\Fitness.Data\obj\Debug\net8.0\Fitness.Data.csproj.CoreCompileInputs.cache
+C:\Users\hakta\OneDrive\Gr24-25\Programmeren Gevorderd 2\YouMove\Fitness\Fitness.Data\obj\Debug\net8.0\Fitness.Data.sourcelink.json
+C:\Users\hakta\OneDrive\Gr24-25\Programmeren Gevorderd 2\YouMove\Fitness\Fitness.Data\obj\Debug\net8.0\Fitness..77D48CF1.Up2Date
+C:\Users\hakta\OneDrive\Gr24-25\Programmeren Gevorderd 2\YouMove\Fitness\Fitness.Data\obj\Debug\net8.0\Fitness.Data.dll
+C:\Users\hakta\OneDrive\Gr24-25\Programmeren Gevorderd 2\YouMove\Fitness\Fitness.Data\obj\Debug\net8.0\refint\Fitness.Data.dll
+C:\Users\hakta\OneDrive\Gr24-25\Programmeren Gevorderd 2\YouMove\Fitness\Fitness.Data\obj\Debug\net8.0\Fitness.Data.pdb
+C:\Users\hakta\OneDrive\Gr24-25\Programmeren Gevorderd 2\YouMove\Fitness\Fitness.Data\obj\Debug\net8.0\Fitness.Data.genruntimeconfig.cache
+C:\Users\hakta\OneDrive\Gr24-25\Programmeren Gevorderd 2\YouMove\Fitness\Fitness.Data\obj\Debug\net8.0\ref\Fitness.Data.dll
