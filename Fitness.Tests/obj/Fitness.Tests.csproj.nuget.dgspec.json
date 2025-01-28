@@ -1,7 +1,7 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\hakta\\OneDrive\\Gr24-25\\Programmeren Gevorderd 2\\YouMove\\Fitness\\Fitness.Tests\\Fitness.Tests.csproj": {}
+    "C:\\Users\\hakta\\OneDrive\\Gr24-25\\Programmeren Gevorderd 2\\YouMove\\Fitness\\fitness.tests\\Fitness.Tests.csproj": {}
   },
   "projects": {
     "C:\\Users\\hakta\\OneDrive\\Gr24-25\\Programmeren Gevorderd 2\\YouMove\\Fitness\\Fitness.API\\Fitness.API.csproj": {
@@ -276,14 +276,14 @@
         }
       }
     },
-    "C:\\Users\\hakta\\OneDrive\\Gr24-25\\Programmeren Gevorderd 2\\YouMove\\Fitness\\Fitness.Tests\\Fitness.Tests.csproj": {
+    "C:\\Users\\hakta\\OneDrive\\Gr24-25\\Programmeren Gevorderd 2\\YouMove\\Fitness\\fitness.tests\\Fitness.Tests.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\hakta\\OneDrive\\Gr24-25\\Programmeren Gevorderd 2\\YouMove\\Fitness\\Fitness.Tests\\Fitness.Tests.csproj",
+        "projectUniqueName": "C:\\Users\\hakta\\OneDrive\\Gr24-25\\Programmeren Gevorderd 2\\YouMove\\Fitness\\fitness.tests\\Fitness.Tests.csproj",
         "projectName": "Fitness.Tests",
-        "projectPath": "C:\\Users\\hakta\\OneDrive\\Gr24-25\\Programmeren Gevorderd 2\\YouMove\\Fitness\\Fitness.Tests\\Fitness.Tests.csproj",
+        "projectPath": "C:\\Users\\hakta\\OneDrive\\Gr24-25\\Programmeren Gevorderd 2\\YouMove\\Fitness\\fitness.tests\\Fitness.Tests.csproj",
         "packagesPath": "C:\\Users\\hakta\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\hakta\\OneDrive\\Gr24-25\\Programmeren Gevorderd 2\\YouMove\\Fitness\\Fitness.Tests\\obj\\",
+        "outputPath": "C:\\Users\\hakta\\OneDrive\\Gr24-25\\Programmeren Gevorderd 2\\YouMove\\Fitness\\fitness.tests\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"

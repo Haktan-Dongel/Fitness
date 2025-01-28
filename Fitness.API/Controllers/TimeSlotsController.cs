@@ -8,12 +8,14 @@ namespace Fitness.API.Controllers
     [Route("api/[controller]")]
     public class TimeSlotsController : ControllerBase
     {
-        private readonly ITimeSlotRepository _timeSlotRepository;
+        private readonly ITimeSlotService _timeSlotService;
         private readonly ILogger<TimeSlotsController> _logger;
 
-        public TimeSlotsController(ITimeSlotRepository timeSlotRepository, ILogger<TimeSlotsController> logger)
+        public TimeSlotsController(
+            ITimeSlotService timeSlotService,
+            ILogger<TimeSlotsController> logger)
         {
-            _timeSlotRepository = timeSlotRepository;
+            _timeSlotService = timeSlotService;
             _logger = logger;
         }
 
@@ -22,7 +24,7 @@ namespace Fitness.API.Controllers
         {
             try
             {
-                var timeSlots = await _timeSlotRepository.GetAllAsync();
+                var timeSlots = await _timeSlotService.GetAllAsync();
                 return Ok(timeSlots);
             }
             catch (Exception ex)
@@ -37,7 +39,7 @@ namespace Fitness.API.Controllers
         {
             try
             {
-                var timeSlots = await _timeSlotRepository.GetByPartOfDayAsync(partOfDay);
+                var timeSlots = await _timeSlotService.GetByPartOfDayAsync(partOfDay);
                 return Ok(timeSlots);
             }
             catch (Exception ex)
@@ -52,7 +54,7 @@ namespace Fitness.API.Controllers
         {
             try
             {
-                var timeSlots = await _timeSlotRepository.GetAvailableForDateAsync(date);
+                var timeSlots = await _timeSlotService.GetAvailableForDateAsync(date);
                 return Ok(timeSlots);
             }
             catch (Exception ex)

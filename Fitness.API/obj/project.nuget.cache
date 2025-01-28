@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "hYFXKgKX88c=",
+  "dgSpecHash": "xa/7sm1su5g=",
   "success": true,
-  "projectFilePath": "C:\\Users\\hakta\\OneDrive\\Gr24-25\\Programmeren Gevorderd 2\\YouMove\\Fitness\\fitness.api\\Fitness.API.csproj",
+  "projectFilePath": "C:\\Users\\hakta\\OneDrive\\Gr24-25\\Programmeren Gevorderd 2\\YouMove\\Fitness\\Fitness.API\\Fitness.API.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\hakta\\.nuget\\packages\\azure.core\\1.38.0\\azure.core.1.38.0.nupkg.sha512",
     "C:\\Users\\hakta\\.nuget\\packages\\azure.identity\\1.11.4\\azure.identity.1.11.4.nupkg.sha512",

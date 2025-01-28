@@ -108,6 +108,9 @@ namespace Fitness.Business.Services
 
         public async Task<MemberDto> UpdateMemberAsync(UpdateMemberDto dto)
         {
+            if (dto == null)
+                throw new ValidationException("Member data is required");
+
             var member = await _memberRepository.GetByIdAsync(dto.MemberId);
             if (member == null)
                 throw new NotFoundException($"Member {dto.MemberId} not found");

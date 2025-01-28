@@ -20,21 +20,14 @@ namespace Fitness.Data.Repositories
                 .FirstOrDefaultAsync(p => p.ProgramCode == programCode);
         }
 
-        public async Task<bool> HasAvailableSpaceAsync(string programCode)
+        public async Task<int> GetCurrentMemberCountAsync(string programCode)
         {
-            var currentCount = await GetCurrentMemberCountAsync(programCode);
-            var program = await _dbSet.FindAsync(programCode);
-            return program != null && currentCount < program.MaxMembers;
+            return await _context.ProgramMembers
+                .CountAsync(pm => pm.ProgramCode == programCode);
         }
 
         public async Task AddMemberToProgramAsync(string programCode, int memberId)
         {
-            if (!await HasAvailableSpaceAsync(programCode))
-                throw new InvalidOperationException("Program is full");
-
-            if (await IsMemberEnrolledAsync(programCode, memberId))
-                throw new InvalidOperationException("Member is already enrolled");
-
             var programMember = new ProgramMembers
             {
                 ProgramCode = programCode,
@@ -52,12 +45,6 @@ namespace Fitness.Data.Repositories
                 .Include(pm => pm.Member)
                 .Select(pm => pm.Member)
                 .ToListAsync();
-        }
-
-        public async Task<int> GetCurrentMemberCountAsync(string programCode)
-        {
-            return await _context.ProgramMembers
-                .CountAsync(pm => pm.ProgramCode == programCode);
         }
 
         public async Task<IEnumerable<FitnessProgram>> GetActiveAsync(DateTime date)

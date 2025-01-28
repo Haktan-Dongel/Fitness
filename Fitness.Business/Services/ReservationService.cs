@@ -151,7 +151,7 @@ namespace Fitness.Business.Services
 
         public async Task<bool> ValidateReservationAsync(int memberId, DateTime date, int timeSlotId, int equipmentId)
         {
-            // Check dagelijks limiet, max 4 slots per dag
+            // Check daily limit (max 4 slots per day)
             var dailyCount = await _repository.GetDailyReservationCountAsync(memberId, date);
             if (dailyCount >= 4) 
             {
@@ -159,7 +159,7 @@ namespace Fitness.Business.Services
                 return false;
             }
 
-            // Check of equipment al gereserveerd is op hetzelfde tijdstip
+            // Check if equipment is already reserved at the same time
             var hasConflict = await _repository.HasConflictingReservationAsync(date, timeSlotId, equipmentId);
             if (hasConflict)
             {

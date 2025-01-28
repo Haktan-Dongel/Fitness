@@ -48,21 +48,6 @@ namespace Fitness.Data.Repositories
                 .CountAsync(r => r.MemberId == memberId && r.Date.Date == date.Date);
         }
 
-        public async Task<bool> ValidateReservationAsync(int memberId, DateTime date, int timeSlotId, int equipmentId)
-        {
-            // Check daily limit (max 4 slots per day)
-            var dailyCount = await GetDailyReservationCountAsync(memberId, date);
-            if (dailyCount >= 4) return false;
-
-            // Check if equipment is already reserved
-            var isEquipmentAvailable = !await _dbSet
-                .AnyAsync(r => r.EquipmentId == equipmentId 
-                           && r.Date.Date == date.Date 
-                           && r.TimeSlots.Any(ts => ts.TimeSlotId == timeSlotId));
-
-            return isEquipmentAvailable;
-        }
-
         public async Task<IEnumerable<Reservation>> GetFutureReservationsAsync(int equipmentId)
         {
             return await _dbSet

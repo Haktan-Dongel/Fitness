@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Mvc;
 using Fitness.Business.Interfaces;
 using Fitness.Business.Models;
+using Fitness.Business.Exceptions;
+using System.ComponentModel.DataAnnotations;
 
 namespace Fitness.API.Controllers
 {
@@ -9,11 +11,16 @@ namespace Fitness.API.Controllers
     public class ProgramsController : ControllerBase
     {
         private readonly IProgramRepository _programRepository;
+        private readonly IProgramService _programService;
         private readonly ILogger<ProgramsController> _logger;
 
-        public ProgramsController(IProgramRepository programRepository, ILogger<ProgramsController> logger)
+        public ProgramsController(
+            IProgramRepository programRepository, 
+            IProgramService programService,
+            ILogger<ProgramsController> logger)
         {
             _programRepository = programRepository;
+            _programService = programService;
             _logger = logger;
         }
 
@@ -52,13 +59,12 @@ namespace Fitness.API.Controllers
         {
             try
             {
-                if (!await _programRepository.HasAvailableSpaceAsync(programCode))
-                {
-                    return BadRequest("Program is full");
-                }
-
-                await _programRepository.AddMemberToProgramAsync(programCode, memberId);
+                await _programService.AddMemberToProgramAsync(programCode, memberId);
                 return Ok("Member added to program successfully");
+            }
+            catch (Fitness.Business.Exceptions.ValidationException ex)
+            {
+                return BadRequest(ex.Message);
             }
             catch (Exception ex)
             {
@@ -72,8 +78,12 @@ namespace Fitness.API.Controllers
         {
             try
             {
-                var hasSpace = await _programRepository.HasAvailableSpaceAsync(programCode);
+                var hasSpace = await _programService.HasAvailableSpaceAsync(programCode);
                 return Ok(hasSpace);
+            }
+            catch (NotFoundException ex)
+            {
+                return NotFound(ex.Message);
             }
             catch (Exception ex)
             {
